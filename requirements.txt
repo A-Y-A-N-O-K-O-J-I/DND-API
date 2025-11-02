@@ -3,6 +3,7 @@ cloudscraper
 fake-useragent
 flask
 lxml
+ffmpeg-python
 python-dotenv
 requests
 tqdm
