@@ -13,6 +13,7 @@ def videoDL(url):
         with yt_dlp.YoutubeDL({"quiet": True}) as yt:
             info = yt.extract_info(url, download=False)
 
+        PROJECT_TYPE= os.getenv('PROJECT_TYPE')
         title = info.get("title", "video")
 
         # Clean title
@@ -30,24 +31,37 @@ def videoDL(url):
         options = {
             "format": "best",
             "outtmpl": file_path,
-            "quiet": True
+            "quiet": False,
+            "nocheckcertificate": True,
+            "retries": 10,
+            "fragment_retries": 10,
+            "noprogress": True
+
         }
 
         with yt_dlp.YoutubeDL(options) as yt:
             yt.download([url])
 
         short_code = secrets.token_urlsafe(6)  # e.g. 'JFGGPGHMHM'
+        dlurl = f"http://localhost:7860/{short_code}" if PROJECT_TYPE == "dev" else f"https://a-y-a-n-o-k-o-j-i-dnd-api.hf.space/{short_code}"
         db = get_db()
         db.execute(
             "INSERT INTO videos (title, filepath, short_code) VALUES (?, ?, ?)",
             (title, file_path, short_code)
         )
         db.commit()
-        return {"url": f"http://localhost:5000/{short_code}", "channel_info": {
-           "channel_name": info['channel'],
+        return {
+            "channel_info": {
+            "channel_name": info.get('channel'),
+            "channel_url":info.get('channel_url')
+
+        },'video_info':{
+            "title": info.get('title'),
+            "comment_count": info.get('comment_count'),
+            'description': info.get('description'),
+            'like_count': info.get('like_count')
         },
-        "title":info['title'],
-        'info':info
+        "download_url": dlurl
         }
 
     except Exception as e:
