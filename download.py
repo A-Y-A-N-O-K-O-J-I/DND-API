@@ -44,11 +44,15 @@ def videoDL(url):
         ffmpeg.input(downloaded_path).output(
             final_path,
             vcodec='libx264',
-            acodec='aac',
+            acodec='aac',       # or 'copy' if already AAC
             preset='superfast',
             crf=28,
-            movflags='+faststart'  # ensures proper MP4 streaming
+            vf='scale=720:-2',
+            r=30,
+            threads=2,
+            movflags='+faststart'
         ).run(overwrite_output=True)
+
 
         # Optional: remove the raw download to save space
         os.remove(downloaded_path)
