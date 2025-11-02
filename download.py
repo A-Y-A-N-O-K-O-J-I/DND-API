@@ -35,7 +35,8 @@ def videoDL(url):
             "nocheckcertificate": True,
             "retries": 10,
             "fragment_retries": 10,
-            "noprogress": True
+            "noprogress": True,
+            "recode-video": "mp4" # Suitable for whatsapp,telegram, etc
 
         }
 
