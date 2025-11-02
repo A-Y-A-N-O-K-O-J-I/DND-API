@@ -1,0 +1,9 @@
+beautifulsoup4
+cloudscraper
+fake-useragent
+flask
+lxml
+python-dotenv
+requests
+tqdm
+yt-dlp
