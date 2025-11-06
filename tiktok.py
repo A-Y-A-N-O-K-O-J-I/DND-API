@@ -1,6 +1,6 @@
 # pylint: skip-file
 from flask import Blueprint, request, jsonify
-from download import videoDL
+from download import videoDL,videoDL_for_insta
 from valid import check_platform
 
 dl_bp = Blueprint("tiktok", __name__, url_prefix='/dl')
@@ -33,7 +33,7 @@ def instagram():
         return jsonify({
             'message': 'Not a valid Instagram url'
         }), 400
-    info = videoDL(url)
+    info = videoDL_for_insta(url)
     return jsonify(info)
 
 
