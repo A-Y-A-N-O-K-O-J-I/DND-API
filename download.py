@@ -139,7 +139,7 @@ def videoDL_for_insta(url):
 
         # Generate short code and DB insert
         short_code = secrets.token_urlsafe(6)
-        dlurl = f"http://localhost:7860/{short_code}" if PROJECT_TYPE == "dev" else f"https://a-y-a-n-o-k-o-j-i-dnd-api.hf.space/{short_code}"
+        dlurl = f"http://localhost:7860/{short_code}" if PROJECT_TYPE == "dev" else f"https://dnd-api.up.railway.app/{short_code}"
 
         db = get_db()
         db.execute(
