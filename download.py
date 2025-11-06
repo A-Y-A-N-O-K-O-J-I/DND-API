@@ -40,18 +40,34 @@ def videoDL(url):
         with yt_dlp.YoutubeDL(options) as yt:
             yt.download([url])
 
-        # Convert to H.264 + AAC using ffmpeg-python
-        ffmpeg.input(downloaded_path).output(
-            final_path,
-            vcodec='libx264',
-            acodec='aac',       # or 'copy' if already AAC
-            preset='superfast',
-            crf=28,
-            vf='scale=720:-2',
-            r=30,
-            threads=2,
-            movflags='+faststart'
-        ).run(overwrite_output=True)
+        probe = ffmpeg.probe(downloaded_path)
+        video_stream = next((s for s in probe['streams'] if s['codec_type'] == 'video'), {})
+        audio_stream = next((s for s in probe['streams'] if s['codec_type'] == 'audio'), {})
+
+        vcodec = video_stream.get('codec_name')
+        acodec = audio_stream.get('codec_name')
+
+        if vcodec == 'h264' and acodec in ('aac', 'mp3'):
+            # Just copy directly
+            ffmpeg.input(downloaded_path).output(
+                final_path,
+                vcodec='copy',
+                acodec='copy',
+                movflags='+faststart'
+            ).run(overwrite_output=True)
+        else:
+            # Re-encode to make it universal
+            ffmpeg.input(downloaded_path).output(
+                final_path,
+                vcodec='libx264',
+                acodec='aac',
+                preset='superfast',
+                crf=28,
+                vf='scale=720:-2',
+                r=30,
+                threads=2,
+                movflags='+faststart'
+            ).run(overwrite_output=True)
 
 
         # Optional: remove the raw download to save space
