@@ -1,7 +1,7 @@
 # pylint: skip-file
 from flask import Blueprint, request, jsonify
-from download import videoDL,videoDL_for_insta
-from valid import check_platform
+from helpers.download import videoDL,videoDL_for_insta
+from utils.valid import check_platform
 
 dl_bp = Blueprint("tiktok", __name__, url_prefix='/dl')
 

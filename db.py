@@ -1,7 +1,7 @@
 import sqlite3
 from flask import g
 
-DATABASE = 'videos.db'
+DATABASE = 'dnd.db'
 
 def get_db():
     """Get a database connection for the current request."""
@@ -24,6 +24,33 @@ def init_db():
             title TEXT NOT NULL,
             filepath TEXT NOT NULL,
             short_code TEXT UNIQUE NOT NULL
+        )
+    """)
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS anime_info (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            episodes TEXT NOT NULL,
+            internal_id TEXT NOT NULL UNIQUE,
+            external_id TEXT NOT NULL UNIQUE
+        )
+    """)
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS anime_episode (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            page_count INTEGER,
+            episode TEXT,
+            external_id TEXT NOT NULL UNIQUE
+        )
+    """)
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS cached_video_url (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            internal_id TEXT NOT NULL,
+            episode TEXT,
+            video_url TEXT,
+            size TEXT,
+            UNIQUE(internal_id, episode)
         )
     """)
     db.commit()

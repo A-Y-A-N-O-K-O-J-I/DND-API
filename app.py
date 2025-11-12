@@ -3,10 +3,13 @@ from flask import send_file, abort
 from dotenv import load_dotenv
 import os
 from db import init_db, close_db, get_db
-from tiktok import dl_bp
+from blueprints.tiktok import dl_bp
+from blueprints.anime import anime_bp
 load_dotenv()
 app = Flask(__name__)
+app.config['JSON_SORT_KEYS'] = False
 app.register_blueprint(dl_bp)
+app.register_blueprint(anime_bp)
 app.teardown_appcontext(close_db)
 with app.app_context():
     init_db()

@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 # Virtual environments
-venv/
+
 env/
 .venv/
 
@@ -44,7 +44,7 @@ coverage.xml
 .env
 .env.local
 .env.*.local
-videos.db
+dnd.db
 # IDEs / editors
 .vscode/
 .idea/
@@ -57,6 +57,6 @@ videos.db
 # Misc
 .DS_Store
 Thumbs.db
-
+animepahe_cookies.json
 # yt-dlp downloads (optional)
 downloads/
