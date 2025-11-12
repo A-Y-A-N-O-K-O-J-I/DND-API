@@ -1,2 +1,0 @@
-We need to create a get cached_anime_search..
-It should contain the title,external and internal id and episode amount..
