@@ -197,6 +197,7 @@ def get_kiwi_url(pahe_url):
     
 
     res = requests.get(pahe_url,timeout=10)
+    print(res.text)
     soup = BeautifulSoup(res.text,"html.parser")
     info = soup.find("script")
     if not info or "kwik" not in info.text:
