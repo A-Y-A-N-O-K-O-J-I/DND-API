@@ -271,7 +271,6 @@ async def get_kiwi_info(kiwi_url):
             return {
                 "cookies": cookie_dict,
                 "html": html,
-                "headers": headers
             }
 
     except Exception as e:
