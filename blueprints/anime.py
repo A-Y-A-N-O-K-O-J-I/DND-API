@@ -31,9 +31,13 @@ def anime_search():
     res = requests.get(
         f"https://animepahe.si/api?m=search&q={encodeURIComponent(query)}", cookies=cookies,
         timeout=10)
-    results = res.json()
+    try:
+        results = res.json()
+    except ValueError:
+        print("❌ Not a JSON response:", res.text[:200])  # show first part of the response for debugging
+        return None
+
     info = results.get('data')
-    # return "hello"
     db = get_db()
     for i in info:
         cursor = db.execute(
