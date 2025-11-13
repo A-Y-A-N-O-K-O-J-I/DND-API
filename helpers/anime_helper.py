@@ -310,7 +310,6 @@ def get_redirect_link(url,id,episode):
             "message":"Server timed out, retry request"
         }
     html = info.get("html")
-    print(html)
     soup = BeautifulSoup(html, "html.parser")
     form_info = soup.find("form")
     size = soup.find("form").find(
@@ -326,6 +325,7 @@ def get_redirect_link(url,id,episode):
     res = requests.post(post_url, cookies=info.get(
         "cookies"), headers=info.get("headers"), data=payload, timeout=10,allow_redirects=False)
     html_content = res.text
+    print(html_content)
     another_soup = BeautifulSoup(html_content,"html.parser")
     direct_link = another_soup.find_all("a")[1]["href"]
     db.execute("INSERT OR REPLACE INTO cached_video_url(internal_id,episode,video_url,size) VALUES(?,?,?,?)",(id,episode,direct_link,size))
