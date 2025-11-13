@@ -189,7 +189,7 @@ def get_pahewin_link(external_id, episode_id):
     return None
 
 
-async def fetch_page_html(url, wait_time=5.5):
+async def fetch_page_html(url, wait_time=6.5):
     """
     Fetch the HTML of a page after waiting for `wait_time` seconds.
     Useful for pages like pahe.win where content loads after a short delay.
