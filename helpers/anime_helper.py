@@ -192,21 +192,110 @@ def get_pahewin_link(external_id, episode_id):
 async def fetch_page_html(url, wait_time=5.5):
     """
     Fetch the HTML of a page after waiting for `wait_time` seconds.
-    Useful for pages like pahe.win where content loads after a short delay.
+    Enhanced with stealth techniques for server environments.
     """
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        print("Headless mode running")
-        context = await browser.new_context()
+        browser = await p.chromium.launch(
+            headless=True,
+            args=[
+                '--disable-blink-features=AutomationControlled',
+                '--disable-dev-shm-usage',
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-web-security',
+                '--disable-features=IsolateOrigins,site-per-process',
+                '--disable-site-isolation-trials'
+            ]
+        )
+        print("Headless mode running with stealth")
+        
+        context = await browser.new_context(
+            viewport={'width': 1920, 'height': 1080},
+            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            locale='en-US',
+            timezone_id='America/New_York',  # Use common timezone
+            permissions=['geolocation'],
+            color_scheme='light',
+            device_scale_factor=1,
+        )
+        
+        # Add extra headers
+        await context.set_extra_http_headers({
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0',
+        })
+        
         page = await context.new_page()
-        await page.goto(url)
-        print(f"Gone to {url} successfully")
-        await asyncio.sleep(wait_time)  # wait for dynamic content to appear
-        html = await page.content()
-        await browser.close()
-        print(f"Fetched html page for {url}")
-        print("This is the html:",html)
-        return html
+        
+        # Inject scripts to hide automation markers
+        await page.add_init_script("""
+            // Overwrite the `navigator.webdriver` property
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined,
+            });
+            
+            // Overwrite the `plugins` property to use a fake length
+            Object.defineProperty(navigator, 'plugins', {
+                get: () => [1, 2, 3, 4, 5],
+            });
+            
+            // Overwrite the `languages` property
+            Object.defineProperty(navigator, 'languages', {
+                get: () => ['en-US', 'en'],
+            });
+            
+            // Overwrite chrome property
+            window.chrome = {
+                runtime: {},
+            };
+            
+            // Add missing properties
+            Object.defineProperty(navigator, 'permissions', {
+                get: () => ({
+                    query: () => Promise.resolve({ state: 'granted' }),
+                }),
+            });
+        """)
+        
+        try:
+            await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+            print(f"Gone to {url} successfully")
+            
+            # Wait for the specified time
+            await asyncio.sleep(wait_time)
+            
+            # Additional wait for network to be idle
+            try:
+                await page.wait_for_load_state('networkidle', timeout=10000)
+            except:
+                print("Network idle timeout, continuing anyway...")
+            
+            html = await page.content()
+            
+            # Check if we got blocked
+            if "challenge-platform" in html or "Just a moment" in html:
+                print("⚠️ WARNING: Got Cloudflare challenge page!")
+                print("First 500 chars of HTML:", html[:500])
+                await browser.close()
+                return None
+            
+            await browser.close()
+            print(f"✅ Fetched html page for {url} successfully")
+            return html
+            
+        except Exception as e:
+            print(f"❌ Error fetching page: {e}")
+            await browser.close()
+            return None
 
 
 def get_kiwi_url(pahe_url):
@@ -216,7 +305,7 @@ def get_kiwi_url(pahe_url):
 
     html = asyncio.run(fetch_page_html(pahe_url))
     if not html:
-        print("no html")
+        print("❌ No html - likely Cloudflare blocked us")
         return None
 
     soup = BeautifulSoup(html, "html.parser")
@@ -224,20 +313,24 @@ def get_kiwi_url(pahe_url):
 
     # Safety checks
     if len(info) < 2:
-        print("Info gotten from soup is less than 2")
+        print(f"Info gotten from soup is less than 2 (got {len(info)})")
+        print("This might mean we got blocked. First 300 chars:")
+        print(html[:300])
         return None
 
     container = info[1]
     info_for_cont = container.find("div", class_="row")
     if not info_for_cont:
+        print("Could not find internal row div")
         return None
 
     info_for_internal_cont = info_for_cont.find("a", class_="btn-block")
     if not info_for_internal_cont or not info_for_internal_cont.get("href"):
+        print("Could not find btn-block link")
         return None
-    print(f"Kiwi url gotten successfully({info_for_internal_cont['href']})")
+    
+    print(f"✅ Kiwi url gotten successfully ({info_for_internal_cont['href']})")
     return info_for_internal_cont["href"]
-
 
 
 async def get_kiwi_info(kiwi_url):
