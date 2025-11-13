@@ -3,7 +3,6 @@ cloudscraper
 fake-useragent
 flask
 lxml
-playwright
 ffmpeg-python
 python-dotenv
 requests
