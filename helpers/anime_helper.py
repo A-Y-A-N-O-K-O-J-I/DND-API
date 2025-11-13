@@ -30,6 +30,7 @@ async def get_animepahe_cookies():
         with open(CACHE_FILE, "r") as f:
             data = json.load(f)
         if not cookies_expired(data):  # Your existing expiry check
+            print("Used cookies from Cached")
             return {k: v["value"] for k, v in data.items()}
 
     # 2️⃣ Else: try to regenerate cookies
@@ -66,7 +67,7 @@ async def get_animepahe_cookies():
             # Save to cache
             with open(CACHE_FILE, "w") as f:
                 json.dump(cookie_dict, f)
-
+            print("Used cookies from animepahe server")
             return {k: v["value"] for k, v in cookie_dict.items()}
 
     except Exception as e:
@@ -75,6 +76,7 @@ async def get_animepahe_cookies():
         if os.path.exists(CACHE_FILE):
             with open(CACHE_FILE, "r") as f:
                 data = json.load(f)
+                print("Cookies gotten through the try except method")
             return {k: v["value"] for k, v in data.items()}
         return None  # No cookies available
 
@@ -93,6 +95,7 @@ def get_cached_anime_info(id):
         db.commit()
         cursor = db.execute("SELECT * FROM anime_info WHERE internal_id =?", (id,))
         row = cursor.fetchone()
+    print("Cached anime info function ran")
     return row
 
 # Helper function used to get actual episode for the search because some episodes might 0 instead of actual value
@@ -113,8 +116,10 @@ def get_actual_episode(external_id):
         db.execute("INSERT INTO anime_episode(episode,external_id,page_count) VALUES(?,?,?)",
                    (data.get("total"), external_id, data.get("last_page")))
         db.commit()
+        print("Get actual episodes ran")
         return data.get("total")
     else:
+        print("Get actual episodes ran with caching")
         return row["episode"]
 
 
@@ -156,7 +161,7 @@ def get_episode_session(id):
         data = res.json()
         time.sleep(1.5)
         episode_result.extend(data.get("data", []))
-
+    print("Episode session function ran successfully")
     return episode_result
 
 
@@ -165,6 +170,7 @@ def get_pahewin_link(external_id, episode_id):
         return None
     url = f"https://animepahe.si/play/{external_id}/{episode_id}"
     cookies = asyncio.run(get_animepahe_cookies())
+    print("Getting anime pahe cookies in get_pahewin_link function")
     res = requests.get(url, cookies=cookies, timeout=10)
     soup = BeautifulSoup(res.text, "html.parser")
     dropdown = soup.find("div", id="pickDownload")
@@ -174,9 +180,12 @@ def get_pahewin_link(external_id, episode_id):
     for a in links:
         text = a.get_text(" ", strip=True).lower()  # normalize and lowercase
         if "720p" in text and "eng" not in text:   # first 720p non-ENG
+            print(f"Gotten pahe.win link successfully for {url}")
+            print(f"Pahe.win link:{a['href']}")
             return a["href"]
 
     # If nothing found
+    print("No link found")
     return None
 
 
@@ -187,21 +196,26 @@ async def fetch_page_html(url, wait_time=5.5):
     """
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
+        print("Headless mode running")
         context = await browser.new_context()
         page = await context.new_page()
         await page.goto(url)
+        print(f"Gone to {url} successfully")
         await asyncio.sleep(wait_time)  # wait for dynamic content to appear
         html = await page.content()
         await browser.close()
+        print(f"Fetched html page for {url}")
         return html
 
 
 async def get_kiwi_url(pahe_url):
     if not pahe_url:
+        print("No pahe.win link")
         return None
 
     html = await fetch_page_html(pahe_url)
     if not html:
+        print("no html")
         return None
 
     soup = BeautifulSoup(html, "html.parser")
@@ -219,7 +233,7 @@ async def get_kiwi_url(pahe_url):
     info_for_internal_cont = info_for_cont.find("a", class_="btn-block")
     if not info_for_internal_cont or not info_for_internal_cont.get("href"):
         return None
-
+    print(f"Kiwi url gotten successfully({info_for_internal_cont['href']})")
     return info_for_internal_cont["href"]
 
 
@@ -272,7 +286,7 @@ async def get_kiwi_info(kiwi_url):
                 "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
             }
             cookie_dict = {c['name']: c['value'] for c in cookies}
-
+            print("Successfully gotten kiwi info")
             return {
                 "cookies": cookie_dict,
                 "html": html,
@@ -286,6 +300,7 @@ async def get_kiwi_info(kiwi_url):
 
 def get_redirect_link(url,id,episode):
     if not url or not id or not episode:
+        print("No url,episode or id detected ending now")
         return None
     db = get_db()
     info = asyncio.run(get_kiwi_info(url))
@@ -314,6 +329,7 @@ def get_redirect_link(url,id,episode):
     direct_link = another_soup.find_all("a")[1]["href"]
     db.execute("INSERT OR REPLACE INTO cached_video_url(internal_id,episode,video_url,size) VALUES(?,?,?,?)",(id,episode,direct_link,size))
     db.commit()
+    print(f"Direct url {direct_link} detected sending response now")
     return {
     "direct_link":direct_link,
     "episode":episode,

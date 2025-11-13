@@ -117,6 +117,7 @@ def anime_download():
         link = row["video_url"]
         res = requests.head(link, timeout=10)
         if res.status_code == 200:
+            print("Link is a valid link with a status code of 200")
             return jsonify({
                 "status": 200,
                 "direct_link": row["video_url"],
