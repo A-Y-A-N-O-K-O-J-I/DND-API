@@ -5,6 +5,7 @@ flask
 lxml
 ffmpeg-python
 python-dotenv
+playwright==1.55.0
 requests
 tqdm
 yt-dlp
