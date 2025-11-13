@@ -194,9 +194,13 @@ def get_kiwi_url(pahe_url):
     if not pahe_url:
         print("No pahe.win link")
         return None
-    
+    headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131 Safari/537.36",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept": "*/*"
+}
 
-    res = requests.get(pahe_url,timeout=10)
+    res = requests.get(pahe_url,timeout=10,headers=headers)
     print(res.text)
     soup = BeautifulSoup(res.text,"html.parser")
     info = soup.find("script")
