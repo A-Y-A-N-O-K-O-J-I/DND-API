@@ -266,25 +266,6 @@ async def get_kiwi_info(kiwi_url):
             await browser.close()
 
             # Convert list of cookies to dict
-            headers = {
-                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-                "accept-language": "en-US,en;q=0.5",
-                "cache-control": "max-age=0",
-                "content-type": "application/x-www-form-urlencoded",
-                "origin": "https://kwik.cx",
-                "priority": "u=0, i",
-                "referer": kiwi_url,
-                "sec-ch-ua": '"Chromium";v="142", "Brave";v="142", "Not_A Brand";v="99"',
-                "sec-ch-ua-mobile": "?0",
-                "sec-ch-ua-platform": '"Linux"',
-                "sec-fetch-dest": "document",
-                "sec-fetch-mode": "navigate",
-                "sec-fetch-site": "same-origin",
-                "sec-fetch-user": "?1",
-                "sec-gpc": "1",
-                "upgrade-insecure-requests": "1",
-                "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
-            }
             cookie_dict = {c['name']: c['value'] for c in cookies}
             print("Successfully gotten kiwi info")
             return {
@@ -321,9 +302,13 @@ def get_redirect_link(url,id,episode):
 
     # Convert /f/ to /d/ for POST request
     post_url = url.replace("/f/", "/d/")
-
+    headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131 Safari/537.36",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept": "*/*"
+}
     res = requests.post(post_url, cookies=info.get(
-        "cookies"), headers=info.get("headers"), data=payload, timeout=10,allow_redirects=False)
+        "cookies"), headers=headers, data=payload, timeout=10,allow_redirects=False)
     html_content = res.text
     print(html_content)
     another_soup = BeautifulSoup(html_content,"html.parser")
