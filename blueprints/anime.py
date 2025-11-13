@@ -134,6 +134,13 @@ def anime_download():
         }), 404
     kiwi_url = asyncio.run(get_kiwi_url(pahe_link))
     results = get_redirect_link(kiwi_url, id, episode)
+    if not results:
+        return jsonify({
+        "status": 500,
+        "message": "Internal error: no results returned"
+    }), 500
+
+
     return jsonify(results),500 if results.get("status") == 500 else 200
 @anime_bp.route("/bulk-download")
 def anime_bulk_downloading():
