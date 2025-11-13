@@ -1,4 +1,5 @@
 import asyncio
+import re
 from playwright.async_api import async_playwright,TimeoutError
 import requests
 from bs4 import BeautifulSoup
@@ -189,71 +190,19 @@ def get_pahewin_link(external_id, episode_id):
     return None
 
 
-async def fetch_page_html(url, wait_time=6.5):
-    """
-    Fetch the HTML of a page after waiting for `wait_time` seconds.
-    Useful for pages like pahe.win where content loads after a short delay.
-    """
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True,args=[
-                '--disable-blink-features=AutomationControlled',
-                '--disable-dev-shm-usage',
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-web-security',
-                '--disable-features=IsolateOrigins,site-per-process',
-                '--disable-site-isolation-trials'
-            ])
-        print("Headless mode running")
-        context = await browser.new_context(
-            viewport={'width': 1920, 'height': 1080},
-            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-            locale='en-US',
-            timezone_id='America/New_York',  # Use common timezone
-            permissions=['geolocation'],
-            color_scheme='light',
-            device_scale_factor=1,
-        )
-        page = await context.new_page()
-        await page.goto(url)
-        print(f"Gone to {url} successfully")
-        await asyncio.sleep(wait_time)  # wait for dynamic content to appear
-        html = await page.content()
-        await browser.close()
-        print(f"Fetched html page for {url}")
-        print("This is the html:",html)
-        return html
-
-
 def get_kiwi_url(pahe_url):
     if not pahe_url:
         print("No pahe.win link")
         return None
+    
 
-    html = asyncio.run(fetch_page_html(pahe_url))
-    if not html:
-        print("no html")
+    res = requests.get(pahe_url,timeout=10)
+    soup = BeautifulSoup(res.text,"html.parser")
+    info = soup.find("script")
+    if not info or "kwik" not in info.text:
         return None
-
-    soup = BeautifulSoup(html, "html.parser")
-    info = soup.find_all("div", class_="row")
-
-    # Safety checks
-    if len(info) < 2:
-        print("Info gotten from soup is less than 2")
-        return None
-
-    container = info[1]
-    info_for_cont = container.find("div", class_="row")
-    if not info_for_cont:
-        return None
-
-    info_for_internal_cont = info_for_cont.find("a", class_="btn-block")
-    if not info_for_internal_cont or not info_for_internal_cont.get("href"):
-        return None
-    print(f"Kiwi url gotten successfully({info_for_internal_cont['href']})")
-    return info_for_internal_cont["href"]
-
+    m = re.search(r"https?://(?:www\.)?kwik\.cx[^\s\"');]+", info.text)
+    return m.group(0)
 
 
 async def get_kiwi_info(kiwi_url):
