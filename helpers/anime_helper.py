@@ -282,8 +282,10 @@ def get_redirect_link(url,id,episode):
             "message":"Server timed out, retry request"
         }
     html = info.get("html")
+    print(html)
     soup = BeautifulSoup(html, "html.parser")
     form_info = soup.find("form")
+    print(form_info)
     size = soup.find("form").find(
         "span").get_text().split("(")[1].split(")")[0]
     token = form_info.find("input")["value"]
