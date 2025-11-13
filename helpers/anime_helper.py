@@ -201,7 +201,6 @@ def get_kiwi_url(pahe_url):
 }
 
     res = requests.get(pahe_url,timeout=10,headers=headers)
-    print(res.text)
     soup = BeautifulSoup(res.text,"html.parser")
     info = soup.find("script")
     if not info or "kwik" not in info.text:
@@ -217,8 +216,37 @@ async def get_kiwi_info(kiwi_url):
 
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            context = await browser.new_context()
+            browser = await p.chromium.launch(headless=True,args=[
+                '--disable-blink-features=AutomationControlled',
+                '--disable-dev-shm-usage',
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-web-security',
+                '--disable-features=IsolateOrigins,site-per-process',
+                '--disable-site-isolation-trials'
+            ])
+            context = await browser.new_context(
+            viewport={'width': 1920, 'height': 1080},
+            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            locale='en-US',
+            timezone_id='America/New_York',  # Use common timezone
+            permissions=['geolocation'],
+            color_scheme='light',
+            device_scale_factor=1,
+        )
+            await context.set_extra_http_headers({
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'DNT': '1',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Cache-Control': 'max-age=0',
+            })
             page = await context.new_page()
 
             # Go to the Kiwi URL
@@ -285,7 +313,6 @@ def get_redirect_link(url,id,episode):
     print(html)
     soup = BeautifulSoup(html, "html.parser")
     form_info = soup.find("form")
-    print(form_info)
     size = soup.find("form").find(
         "span").get_text().split("(")[1].split(")")[0]
     token = form_info.find("input")["value"]
