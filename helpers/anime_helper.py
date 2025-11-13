@@ -205,15 +205,16 @@ async def fetch_page_html(url, wait_time=5.5):
         html = await page.content()
         await browser.close()
         print(f"Fetched html page for {url}")
+        print("This is the html:",html)
         return html
 
 
-async def get_kiwi_url(pahe_url):
+def get_kiwi_url(pahe_url):
     if not pahe_url:
         print("No pahe.win link")
         return None
 
-    html = await fetch_page_html(pahe_url)
+    html = asyncio.run(fetch_page_html(pahe_url))
     if not html:
         print("no html")
         return None
@@ -223,6 +224,7 @@ async def get_kiwi_url(pahe_url):
 
     # Safety checks
     if len(info) < 2:
+        print("Info gotten from soup is less than 2")
         return None
 
     container = info[1]
