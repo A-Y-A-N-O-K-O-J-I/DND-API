@@ -284,7 +284,7 @@ async def fetch_page_html(url, wait_time=5.5):
             # Check if we got blocked
             if "challenge-platform" in html or "Just a moment" in html:
                 print("⚠️ WARNING: Got Cloudflare challenge page!")
-                print("First 500 chars of HTML:", html[:500])
+                print("First 500 chars of HTML:", html)
                 await browser.close()
                 return None
             
