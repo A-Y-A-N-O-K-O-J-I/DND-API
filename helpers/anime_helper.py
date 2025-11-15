@@ -1,12 +1,13 @@
+import json
+import os
+import time
 import asyncio
 import re
 from playwright.async_api import async_playwright,TimeoutError
 import requests
 from bs4 import BeautifulSoup
+import cloudscraper
 from db import get_db
-import json
-import os
-import time
 
 
 def cookies_expired(cookie_dict):
@@ -304,9 +305,11 @@ def get_redirect_link(url,id,episode):
     headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131 Safari/537.36",
     "Accept-Language": "en-US,en;q=0.9",
+    "referer":url,
     "Accept": "*/*"
 }
-    res = requests.post(post_url, cookies=info.get(
+    scraper = cloudscraper.create_scraper()
+    res = scraper.post(post_url, cookies=info.get(
         "cookies"), headers=headers, data=payload, timeout=10,allow_redirects=False)
     html_content = res.text
     print(html_content)
