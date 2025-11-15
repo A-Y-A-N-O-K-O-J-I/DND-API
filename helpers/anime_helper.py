@@ -302,20 +302,26 @@ def get_redirect_link(url,id,episode):
 
     # Convert /f/ to /d/ for POST request
     post_url = url.replace("/f/", "/d/")
+    cookie_dict = info["cookies"]
+
+    # Convert it into a single Cookie header string
+    cookies = "; ".join([f"{name}={value}" for name, value in cookie_dict.items()])
     headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131 Safari/537.36",
-    "Accept-Language": "en-US,en;q=0.9",
-    "referer":url,
-    "Accept": "*/*"
-}
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.5",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Origin": "https://kwik.cx",
+                    "Referer": url,
+                    "Cookie": cookies,
+                }
     scraper = cloudscraper.create_scraper(
         browser={
         "browser": "chrome",
         "platform": "windows",
-    },
+    }
     )
-    res = scraper.post(post_url, cookies=info.get(
-        "cookies"), headers=headers, data=payload, timeout=10,allow_redirects=False)
+    res = scraper.post(post_url,headers=headers, data=payload, timeout=10,allow_redirects=False)
     html_content = res.text
     print(html_content)
     another_soup = BeautifulSoup(html_content,"html.parser")

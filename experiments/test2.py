@@ -21,6 +21,6 @@ cookies = {
 payload ={
     "_token":"dR3Oex3uW3vJYgY6EojxnVVauGiUXBF36hIyHfWt"
 }
-res = scraper.post("https://kwik.cx/d/cJFkUIfRwxTf",data=payload,headers=headers,allow_redirects=False,cookies=cookies)
+res = scraper.get("https://animepahe.si")
 print(res.text)
 
