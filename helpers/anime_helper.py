@@ -254,7 +254,7 @@ async def get_kiwi_info(kiwi_url):
 
             # Wait for page to load, but don’t crash if it times out
             try:
-                await page.wait_for_load_state("domcontentloaded", timeout=10000)
+                await page.wait_for_load_state("networkidle", timeout=10000)
             except TimeoutError:
                 print("⚠️ Timeout waiting for page to load, continuing anyway...")
 
@@ -302,9 +302,23 @@ def get_redirect_link(url,id,episode):
     # Convert /f/ to /d/ for POST request
     post_url = url.replace("/f/", "/d/")
     headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131 Safari/537.36",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept": "*/*"
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    'accept-language': 'en-US,en;q=0.7',
+    'cache-control': 'max-age=0',
+    'content-type': 'application/x-www-form-urlencoded',
+    'origin': 'https://kwik.cx',
+    'priority': 'u=0, i',
+    'referer': url,
+    'sec-ch-ua': '"Chromium";v="142", "Brave";v="142", "Not_A Brand";v="99"',
+    'sec-ch-ua-mobile': '?1',
+    'sec-ch-ua-platform': '"Android"',
+    'sec-fetch-dest': 'document',
+    'sec-fetch-mode': 'navigate',
+    'sec-fetch-site': 'same-origin',
+    'sec-fetch-user': '?1',
+    'sec-gpc': '1',
+    'upgrade-insecure-requests': '1',
+    'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36'
 }
     res = requests.post(post_url, cookies=info.get(
         "cookies"), headers=headers, data=payload, timeout=10,allow_redirects=False)
