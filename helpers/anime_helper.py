@@ -308,7 +308,12 @@ def get_redirect_link(url,id,episode):
     "referer":url,
     "Accept": "*/*"
 }
-    scraper = cloudscraper.create_scraper()
+    scraper = cloudscraper.create_scraper(
+        browser={
+        "browser": "chrome",
+        "platform": "windows",
+    },
+    )
     res = scraper.post(post_url, cookies=info.get(
         "cookies"), headers=headers, data=payload, timeout=10,allow_redirects=False)
     html_content = res.text
