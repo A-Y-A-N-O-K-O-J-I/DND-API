@@ -9,4 +9,5 @@ python-dotenv
 playwright==1.55.0
 requests
 tqdm
+tls-client
 yt-dlp
