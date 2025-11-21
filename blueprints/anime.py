@@ -2,9 +2,9 @@ import asyncio
 import json
 import requests
 from flask import jsonify, Blueprint, request, Response
-from helpers.anime_helper import get_kiwi_url, get_redirect_link
-from helpers.anime_helper import get_animepahe_cookies, get_pahewin_link
-from helpers.anime_helper import get_actual_episode, get_cached_anime_info, get_episode_session
+from helpers.anime_helper_kwik import get_kiwi_url, get_redirect_link
+from helpers.anime_helper_kwik import get_animepahe_cookies, get_pahewin_link
+from helpers.anime_helper_kwik import get_actual_episode, get_cached_anime_info, get_episode_session
 from utils.helper import encodeURIComponent
 from utils.generate import generate_internal_id
 from db import get_db
