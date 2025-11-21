@@ -1,38 +1,19 @@
-import tls_client
+import requests
 
-session = tls_client.Session(
-    client_identifier="chrome_120",
-    random_tls_extension_order=True
-)
-
-url = "https://kwik.cx/d/VFjuoZpRvYtH"  # change if needed
-
-headers = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-    "accept-language": "en-US,en;q=0.6",
-    "cache-control": "max-age=0",
-    "content-type": "application/x-www-form-urlencoded",
-    "priority": "u=0, i",
-    "sec-ch-ua": "\"Chromium\";v=\"142\", \"Brave\";v=\"142\", \"Not_A Brand\";v=\"99\"",
-    "sec-ch-ua-mobile": "?1",
-    "sec-ch-ua-platform": "\"Android\"",
-    "sec-fetch-dest": "document",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-site": "same-origin",
-    "sec-fetch-user": "?1",
-    "sec-gpc": "1",
-    "referer":"https://kwik.cx/f/VFjuoZpRvYtH",
-    "upgrade-insecure-requests": "1",
-    "cookie":"kwik_session=eyJpdiI6Im9EZGZJcmIwZVAwK2VKTUNRWU1pT1E9PSIsInZhbHVlIjoibTRsTW0rK3k4c1pDeWx4dTMwUGhiWC9ZcVJ3MFIyNGFrK2wvUTRVcUE5dGFFNlEzenQ0UURWWVFrVkM3TUFoUkJqVVd6ckZNR2wvY1lpZGJYZkZiQ2U0aHUvc3dhTkdtU0F5cWhDRTlCVE5Va3FaVm9Sc054eTZtN0FwVlRKd0EiLCJtYWMiOiI0YjhiN2Y4Mzg0ZjAxMWRjNzRjODFlMmU3NzQxMTVlNzhiNzY2OGE2OGZmOTY3YTA0MjE1MDllNDAwMjc5ZTYyIiwidGFnIjoiIn0%3D"
-}
-
+base_url = "https://access-kwik.apex-cloud.workers.dev"
+kwik_url = "https://kwik.cx/f/VFjuoZpRvYtH"
 payload = {
-    "_token":"LlFG4W3AWM0udAzSjM0DbIFF1aZ51T4RjOJfn7FF"
-}
-
-response = session.post(url, headers=headers, data=payload, allow_redirects=False)
-
-print("Status:", response.status_code)
-print("URL:", response.url)
-print("Length:", len(response.text))
-print("Preview:", response.text[:300])
+        "service": "kwik",
+        "action": "fetch",
+        "content": {
+            "kwik": kwik_url
+        },
+        "auth": "eyJpdiI6InhoQWlYZ3lVVmpxR3ZIbVNzTWpNbVE9PSIsInZhbHVlIjoiOHJzUS9RKzdWNDZkVlVTeDBlSitlejFrNk9xNnRjYnRNTnZyZWhFSFhXVTFna29oRUdqb0QvZjJITjcwaksrVE5NSTNYNnZ0aWVmcHcyUGpPZVNvdzVEcnk3S1c2czZNaHpTbmNJUWNUMFI2QVp0L1Q3VWk1ajBSaXl1YzRBaGIiLCJtYWMiOiI0NDBhM2I5ODY4ZDAzN2IxNWQwYTk4ZDAyNDdmMDBhNGU5NjFjNjE5NjM0MzUzYTkyODM0ODY0NmIxY2QyOGUzIiwidGFnIjoiIn0="
+    }
+headers = {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    }
+response = requests.post(base_url,data=payload,headers=headers,timeout=10)
+print(response.status_code)
+print(response.text)

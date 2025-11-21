@@ -1,52 +1,218 @@
+import re
 import requests
 
-url = "https://kwik.cx/d/Hd8rsjV7bew0"
+# Global variables
+base_alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
+encoded_string = "XXX"
+zp = 17
+alphabet_key = "XXX"
+offset = 1
+base = 5
+placeholder = 24
 
-# Cookies taken from the curl -b string
-cookies = {
-    "srv": "s0",
-    "pp_main_4e5e04716f26fd21bf611637f4fb8a46": "1",
-    "pp_exp_4e5e04716f26fd21bf611637f4fb8a46": "1762816748750",
-    "cf_clearance": "Hr1JoV6o5RCjMf4MnIwjkmZ8aFq2JWrvXinzxpPnmDo-1762813149-1.2.1.1-q3JbDXaTMpdJ03rZ9rfVWZzRpgBOgbdZ7_e3MtzImMqMPdeUv19so5Uu7R1levTMm7IEtuMl7W.CcW7O1XHc2N9B.Cy.Mtdiq6Fd7PEnbJXGzHfCRTQUZKzFZ2reAP9RvSw1zVqcQz40CSQNy60drv8T59CetQ7vyGN.KJAnNeGhGSfwRpdTCKExlDvhg0.7tcNXIN67ttYlvF1vyguDRbS0EKeqXQpKFEyEPjph9Ms",
-    "kwik_session": "eyJpdiI6ImR0S2FPUHFnL2JGd2JGREl6eHpHS0E9PSIsInZhbHVlIjoiMHBCUmZuWFhkaEovc2UzNDZab1ZNQmtEbjhuS3lkOG42L3RLTDRPOGsySkxEY0NmMjZoS0kySDIvWENkeHdjMHIydUNXR2RXb0xkNWZQVjRGb0VLT25Dck5yN0l5YkRzbzRVWmp1UWsxQ0lPb3FGczczamNwc0gyUjBQRmg1c0ciLCJtYWMiOiIzZWZkOGFkOTU3M2NmNzNhMzU2YWE3M2ZlZGM3YzgyMjEzNGU4NjFiNjM0YmI2YjJkNzdhOWQ1YjBhMDhhNDdmIiwidGFnIjoiIn0%3D",
-    "pp_show_on_4e5e04716f26fd21bf611637f4fb8a46": "3",
-    'dom3ic8zudi28v8lr6fgphwffqoz0j6c': 'eb3197ab-0d61-4699-82a3-f1383d4c1829%3A1%3A1',
-    'uid_id2': 'eb3197ab-0d61-4699-82a3-f1383d4c1829:1:1'
-}
 
-# Headers mirrored from curl (minus Cookie which is passed via `cookies`)
-headers = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-    "accept-language": "en-US,en;q=0.5",
-    "cache-control": "max-age=0",
-    "content-type": "application/x-www-form-urlencoded",
-    "origin": "https://kwik.cx",
-    "priority": "u=0, i",
-    "referer": "https://kwik.cx/f/Hd8rsjV7bew0",
-    "sec-ch-ua": '"Chromium";v="142", "Brave";v="142", "Not_A Brand";v="99"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Linux"',
-    "sec-fetch-dest": "document",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-site": "same-origin",
-    "sec-fetch-user": "?1",
-    "sec-gpc": "1",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
-}
+def _0xe16c(IS: str, Iy: int, ms: int) -> int:
+    """Convert string from base Iy to base ms"""
+    h = base_alphabet[:Iy]
+    i = base_alphabet[:ms]
 
-# form payload (same as --data-raw '_token=...')
-data = {"_token": "ErDN80t5f8Rr9UWYghwlQTtOl4QnNoP5v71zLaSV"}
+    # Decode string IS from base Iy to int j
+    j = 0
+    for idx, ch in enumerate(reversed(IS)):
+        pos = h.find(ch)
+        if pos != -1:
+            j += pos * (Iy ** idx)
 
-# Use a session to keep things tidy
-with requests.Session() as s:
-    try:
-        # you can pass cookies to session.post or rely on s.cookies.update(cookies) before posting
-        resp = s.post(url, headers=headers, cookies=cookies, data=data, timeout=20,allow_redirects=False)
-        resp.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        print("Request failed:", e)
+    # Convert int j to base ms string
+    if j == 0:
+        return int(i[0])
+
+    k = ""
+    while j > 0:
+        k = i[j % ms] + k
+        j //= ms
+
+    return int(k)
+
+
+def decode_js_style(Hb: str, zp: int, Wg: str, Of: int, Jg: int, gj_placeholder: int) -> str:
+    """Decode the obfuscated JavaScript string"""
+    gj = ""
+    i = 0
+
+    while i < len(Hb):
+        s = ""
+        # Collect characters until we hit the delimiter
+        while i < len(Hb) and Hb[i] != Wg[Jg]:
+            s += Hb[i]
+            i += 1
+
+        # Replace alphabet characters with their positions
+        for j, char in enumerate(Wg):
+            s = s.replace(char, str(j))
+
+        # Decode and subtract offset
+        if s:
+            code = _0xe16c(s, Jg, 10) - Of
+            gj += chr(code)
+
+        i += 1
+
+    return gj
+
+
+def fetch_kwik_direct(kwik_link: str, token: str, kwik_session: str) -> str:
+    """Fetch the direct download link by following the redirect"""
+    headers = {
+        "referer": kwik_link,
+        "cookie": f"kwik_session={kwik_session}",
+    }
+    data = {"_token": token}
+
+    # Make POST request with redirects disabled
+    response = requests.post(
+        kwik_link,
+        headers=headers,
+        data=data,
+        allow_redirects=False
+    )
+
+    # Check if status code is 302 (redirect)
+    if response.status_code == 302:
+        redirect_location = response.headers.get("Location")
+        if redirect_location:
+            return redirect_location
+        raise RuntimeError(f"Redirect Location not found in response from {kwik_link}")
     else:
-        print("Status code:", resp.status_code)
-        print("Final URL:", resp.url)
-        print("Response snippet:\n", resp.text)
+        raise RuntimeError(f"Expected 302 redirect, got {response.status_code} from {kwik_link}")
+
+
+def fetch_kwik_dlink(kwik_link: str, retries: int = 3) -> str:
+    """Fetch and decode the Kwik page to extract direct link"""
+    global encoded_string, alphabet_key, offset, base
+    
+    if retries <= 0:
+        raise RuntimeError(f"Kwik fetch failed: exceeded retry limit : {kwik_link}")
+
+    try:
+        response = requests.get(kwik_link)
+        if response.status_code != 200:
+            raise RuntimeError(f"Failed to Get Kwik from {kwik_link}, StatusCode: {response.status_code}")
+
+        # Clean the response text
+        clean_text = response.text.replace('\r\n', '').replace('\r', '').replace('\n', '')
+
+        # Extract session from cookies
+        kwik_session = response.cookies.get('kwik_session', '')
+
+        # Extract encoded parameters
+        encode_pattern = r'\(\s*"([^",]*)"\s*,\s*\d+\s*,\s*"([^",]*)"\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*\d+[a-zA-Z]?\s*\)'
+        encode_match = re.search(encode_pattern, clean_text)
+
+        if not encode_match or not encode_match.group(1) or not encode_match.group(2):
+            return fetch_kwik_dlink(kwik_link, retries - 1)
+
+        # Update global variables
+        encoded_string = encode_match.group(1)
+        alphabet_key = encode_match.group(2)
+        offset = int(encode_match.group(3))
+        base = int(encode_match.group(4))
+
+        # Decode the obfuscated string
+        decoded_string = decode_js_style(
+            encoded_string,
+            zp,
+            alphabet_key,
+            offset,
+            base,
+            placeholder
+        )
+
+        # Extract link and token from decoded string
+        link_match = re.search(r'"(https?://kwik\.[^/\s"]+/[^/\s"]+/[^"\s]*)"', decoded_string)
+        token_match = re.search(r'name="_token"[^"]*"(\S*)">', decoded_string)
+
+        if not link_match or not token_match or not link_match.group(1) or not token_match.group(1):
+            return fetch_kwik_dlink(kwik_link, retries - 1)
+
+        link = link_match.group(1)
+        token = token_match.group(1)
+
+        # Fetch the direct link
+        direct_link = fetch_kwik_direct(link, token, kwik_session)
+        return direct_link
+
+    except Exception as e:
+        if retries > 1:
+            return fetch_kwik_dlink(kwik_link, retries - 1)
+        raise
+
+
+def extract_kwik_link(link: str) -> str:
+    """Extract the direct download link from an Animepahe episode URL"""
+    print("\n * Extracting Kwik Link...", end='', flush=True)
+    
+    response = requests.get(link)
+    if response.status_code != 200:
+        raise RuntimeError(f"Failed to Get Kwik from {link}, StatusCode: {response.status_code}")
+
+    clean_text = response.text.replace('\r\n', '').replace('\r', '').replace('\n', '')
+
+    # First attempt: direct link extraction
+    kwik_match = re.search(r'"(https?://kwik\.[^/\s"]+/[^/\s"]+/[^"\s]*)"', clean_text)
+
+    if not kwik_match or not kwik_match.group(1):
+        # Second attempt: decode and extract
+        encode_pattern = r'\(\s*"([^",]*)"\s*,\s*\d+\s*,\s*"([^",]*)"\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*\d+[a-zA-Z]?\s*\)'
+        encode_match = re.search(encode_pattern, clean_text)
+
+        if not encode_match:
+            raise RuntimeError(f"Failed to extract encoding parameters from {link}")
+
+        try:
+            temp_encoded = encode_match.group(1)
+            temp_alphabet = encode_match.group(2)
+            temp_offset = int(encode_match.group(3))
+            temp_base = int(encode_match.group(4))
+
+            decoded_string = decode_js_style(
+                temp_encoded,
+                zp,
+                temp_alphabet,
+                temp_offset,
+                temp_base,
+                placeholder
+            )
+
+            kwik_match = re.search(r'"(https?://kwik\.[^/\s"]+/[^/\s"]+/[^"\s]*)"', decoded_string)
+
+            if not kwik_match or not kwik_match.group(1):
+                raise RuntimeError("Failed to extract Kwik link from decoded content")
+
+            kwik_link = kwik_match.group(1)
+            kwik_link = re.sub(r'(https://kwik\.[^/]+/)d/', r'\1f/', kwik_link)
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to decode and extract Kwik link: {e}")
+    else:
+        kwik_link = kwik_match.group(1)
+
+    print("\r * Extracting Kwik Link : \033[92mOK!\033[0m")
+    print(" * Fetching Kwik Direct Link...", end='', flush=True)
+
+    direct_link = fetch_kwik_dlink(kwik_link)
+
+    print("\r * Fetching Kwik Direct Link : \033[92mOK!\033[0m")
+    return direct_link
+
+
+# Example usage
+if __name__ == "__main__":
+    # Replace with actual Animepahe episode URL
+    episode_url = "https://kwik.cx/f/u1gohmECOejS"
+    
+    try:
+        direct_link = extract_kwik_link(episode_url)
+        print(f"\nDirect Download Link: {direct_link}")
+    except Exception as e:
+        print(f"\nError: {e}")

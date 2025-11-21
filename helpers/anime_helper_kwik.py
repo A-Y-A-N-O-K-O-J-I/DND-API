@@ -106,23 +106,11 @@ def get_cached_anime_info(id):
 def get_actual_episode(external_id):
     if not external_id:
         return None
-    db = get_db()
-    cursor = db.execute(
-        "SELECT episode FROM anime_episode WHERE external_id = ?", (external_id,))
-    row = cursor.fetchone()
-    if not row or not row["episode"]:
-        cookies = asyncio.run(get_animepahe_cookies())
-        res = requests.get(
-            f"https://animepahe.si/api?m=release&id={external_id}", cookies=cookies, timeout=10)
-        data = res.json()
-        db.execute("INSERT INTO anime_episode(episode,external_id,page_count) VALUES(?,?,?)",
-                   (data.get("total"), external_id, data.get("last_page")))
-        db.commit()
-        print("Get actual episodes ran")
-        return data.get("total")
-    else:
-        print("Get actual episodes ran with caching")
-        return row["episode"]
+    cookies = asyncio.run(get_animepahe_cookies())
+    res = requests.get(
+        f"https://animepahe.si/api?m=release&id={external_id}", cookies=cookies, timeout=10)
+    data = res.json()
+    return data.get("total")
 
 
 def get_episode_session(id):
@@ -295,37 +283,7 @@ def get_redirect_link(url,id,episode):
     form_info = soup.find("form")
     size = soup.find("form").find(
         "span").get_text().split("(")[1].split(")")[0]
-    token = form_info.find("input")["value"]
-    payload = {
-        "_token": token
-    }
-
-    # Convert /f/ to /d/ for POST request
-    post_url = url.replace("/f/", "/d/")
-    cookie_dict = info["cookies"]
-
-    # Convert it into a single Cookie header string
-    cookies = "; ".join([f"{name}={value}" for name, value in cookie_dict.items()])
-    headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                    "Accept-Language": "en-US,en;q=0.5",
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "Origin": "https://kwik.cx",
-                    "Referer": url,
-                    "Cookie": cookies,
-                }
-    scraper = cloudscraper.create_scraper(
-        browser={
-        "browser": "chrome",
-        "platform": "windows",
-    }
-    )
-    res = scraper.post(post_url,headers=headers, data=payload, timeout=10,allow_redirects=False)
-    html_content = res.text
-    print(html_content)
-    another_soup = BeautifulSoup(html_content,"html.parser")
-    direct_link = another_soup.find_all("a")[1]["href"]
+        
     db.execute("INSERT OR REPLACE INTO cached_video_url(internal_id,episode,video_url,size) VALUES(?,?,?,?)",(id,episode,direct_link,size))
     db.commit()
     print(f"Direct url {direct_link} detected sending response now")
