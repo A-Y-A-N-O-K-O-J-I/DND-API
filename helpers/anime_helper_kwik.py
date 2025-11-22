@@ -283,27 +283,19 @@ def get_redirect_link(url,id,episode):
     form_info = soup.find("form")
     size = soup.find("form").find(
         "span").get_text().split("(")[1].split(")")[0]
-    base_url = "https://access-kwik.apex-cloud.workers.dev"
-    payload = {
-        "service": "kwik",
-        "action": "fetch",
-        "content": {
-            "kwik": url
-        },
-        "auth": ""#"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.O0FKaqhJjEZgCAVfZoLz6Pjd7Gs9Kv6qi0P8RyATjaE"
+    base_url = "https://kwik-test.vercel.app/kwik"
+    params= {
+        "kwik_url":url
     }
-    headers = {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    }
-    res = requests.post(base_url,data=json.dumps(payload),headers=headers)
+    res = requests.get(base_url,params=params)
     if res.status_code != 200:
+        print(res.text)
         return {
             "status":500,
-            "message":"Server timed out, retry request"
+            "message":"Server timed out"
         }
     data = res.json()
-    direct_link = data.get("content").get("url")
+    direct_link = data.get("url")
     db.execute("INSERT OR REPLACE INTO cached_video_url(internal_id,episode,video_url,size) VALUES(?,?,?,?)",
                (id, episode, direct_link, size))
     db.commit()
