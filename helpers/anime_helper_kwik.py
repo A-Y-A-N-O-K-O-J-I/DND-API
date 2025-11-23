@@ -219,9 +219,7 @@ def get_kiwi_info(kiwi_url):
         res = requests.get(kiwi_url,timeout=10,headers=headers)
         html_soup = BeautifulSoup(res.text,"html.parser")
         scripts = html_soup.find_all("script")
-        print(res.text)
         obf_js = scripts[-3].text
-        print(obf_js)
         deobf_js = deobfuscate(obf_js)
         return {
             **extract_info(deobf_js),
@@ -250,13 +248,14 @@ def get_redirect_link(url,id,episode):
             "message":"Server timed out, retry request"
         }
     
-    base_url = "https://wispy-resonance-ee4a.ayanokojix2306.workers.dev/"
+    base_url = "https://kwik-test.vercel.app/kwik"
+    # base_url = "http://localhost:5000/kwik"
     payload = {
         "kwik_url":url,
         "token":info.get("token"),
         "kwik_session":info.get("kwik_session")
     }
-    res = requests.post(base_url,data=json.dumps(payload),timeout=10)
+    res = requests.post(base_url,data=json.dumps(payload),timeout=10,headers={"Content-Type": "application/json"})
     if res.status_code != 200:
         print(res.text)
         return {
