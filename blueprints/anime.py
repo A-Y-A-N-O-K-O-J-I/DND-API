@@ -207,7 +207,7 @@ def anime_bulk_downloading():
                 "status": 404,
                 "message": "Internal Link not found"
             }), 404
-        kiwi_url = asyncio.run(get_kiwi_url(pahe_link))
+        kiwi_url = get_kiwi_url(pahe_link)
         results = get_redirect_link(kiwi_url, id, episode)
         download_link.append(results)
     return download_link
