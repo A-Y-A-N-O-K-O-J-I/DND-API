@@ -1,5 +1,4 @@
 beautifulsoup4
-cloudscraper
 fake-useragent
 flask
 httpx
@@ -9,5 +8,4 @@ python-dotenv
 playwright==1.55.0
 requests
 tqdm
-tls-client
 yt-dlp

@@ -6,9 +6,8 @@ import re
 from playwright.async_api import async_playwright,TimeoutError
 import requests
 from bs4 import BeautifulSoup
-import cloudscraper
 from db import get_db
-
+from utils.helper import deobfuscate,extract_info
 
 def cookies_expired(cookie_dict):
     now = time.time()
@@ -198,72 +197,26 @@ def get_kiwi_url(pahe_url):
     return m.group(0)
 
 
-async def get_kiwi_info(kiwi_url):
-    if not kiwi_url:
-        print("⚠️ No Kiwi URL provided")
-        return None
-
+def get_kiwi_info(kiwi_url):
     try:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True,args=[
-                '--disable-blink-features=AutomationControlled',
-                '--disable-dev-shm-usage',
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-web-security',
-                '--disable-features=IsolateOrigins,site-per-process',
-                '--disable-site-isolation-trials'
-            ])
-            context = await browser.new_context(
-            viewport={'width': 1920, 'height': 1080},
-            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-            locale='en-US',
-            timezone_id='America/New_York',  # Use common timezone
-            permissions=['geolocation'],
-            color_scheme='light',
-            device_scale_factor=1,
-        )
-            await context.set_extra_http_headers({
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'DNT': '1',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1',
-                'Sec-Fetch-Dest': 'document',
-                'Sec-Fetch-Mode': 'navigate',
-                'Sec-Fetch-Site': 'none',
-                'Sec-Fetch-User': '?1',
-                'Cache-Control': 'max-age=0',
-            })
-            page = await context.new_page()
+        if not kiwi_url:
+            return None
+        res = requests.get(kiwi_url,timeout=10)
+        html_soup = BeautifulSoup(res.text,"html.parser")
+        scripts = html_soup.find_all("script")
+        obf_js = scripts[-2].text
+        deobf_js = deobfuscate(obf_js)
+        return {
+            **extract_info(deobf_js),
+            "kwik_session":res.cookies.get_dict().get("kwik_session")
 
-            # Go to the Kiwi URL
-            await page.goto(kiwi_url)
-
-            # Wait for page to load, but don’t crash if it times out
-            try:
-                await page.wait_for_load_state("domcontentloaded", timeout=10000)
-            except TimeoutError:
-                print("⚠️ Timeout waiting for page to load, continuing anyway...")
-
-            # Small sleep to ensure cookies are set
-            await asyncio.sleep(1)
-
-            cookies = await context.cookies()
-            html = await page.content()
-            await browser.close()
-
-            # Convert list of cookies to dict
-            cookie_dict = {c['name']: c['value'] for c in cookies}
-            print("Successfully gotten kiwi info")
-            return {
-                "cookies": cookie_dict,
-                "html": html,
-            }
-
+        }
+    except IndexError:
+        print("Script is out of range -2")
+        return None
     except Exception as e:
-        print(f"⚠️ Failed to get Kiwi info: {e}")
+        print("Kiwi error Occured",e)
+        traceback.print_exc()
         return None
 
 
@@ -272,22 +225,20 @@ def get_redirect_link(url,id,episode):
         print("No url,episode or id detected ending now")
         return None
     db = get_db()
-    info = asyncio.run(get_kiwi_info(url))
+    info = get_kiwi_info(url)
     if not info:
         return {
             "status":500,
             "message":"Server timed out, retry request"
         }
-    html = info.get("html")
-    soup = BeautifulSoup(html, "html.parser")
-    form_info = soup.find("form")
-    size = soup.find("form").find(
-        "span").get_text().split("(")[1].split(")")[0]
-    base_url = "https://kwik-test.vercel.app/kwik"
-    params= {
-        "kwik_url":url
+    
+    base_url = "https://wispy-resonance-ee4a.ayanokojix2306.workers.dev/"
+    payload = {
+        "kwik_url":url,
+        "token":info.get("token"),
+        "kwik_session":info.get("kwik_session")
     }
-    res = requests.get(base_url,params=params)
+    res = requests.post(base_url,data=json.dumps(payload),timeout=10)
     if res.status_code != 200:
         print(res.text)
         return {
@@ -295,7 +246,8 @@ def get_redirect_link(url,id,episode):
             "message":"Server timed out"
         }
     data = res.json()
-    direct_link = data.get("url")
+    size = info.get("size")
+    direct_link = data.get("download_link")
     db.execute("INSERT OR REPLACE INTO cached_video_url(internal_id,episode,video_url,size) VALUES(?,?,?,?)",
                (id, episode, direct_link, size))
     db.commit()
