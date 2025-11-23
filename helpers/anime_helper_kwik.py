@@ -220,7 +220,7 @@ def get_kiwi_info(kiwi_url):
         html_soup = BeautifulSoup(res.text,"html.parser")
         scripts = html_soup.find_all("script")
         print(res.text)
-        obf_js = scripts[-2].text
+        obf_js = scripts[-3].text
         print(obf_js)
         deobf_js = deobfuscate(obf_js)
         return {

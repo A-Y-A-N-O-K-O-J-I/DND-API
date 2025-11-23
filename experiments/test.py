@@ -92,12 +92,25 @@ def extract_info(js_code):
         "kwik_url": kwik_url,
         "token": token
     }
-
-res = requests.get("https://kwik.cx/f/I9kUGgPpESEZ")
+headers = {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate',  # remove 'br'
+    'DNT': '1',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1',
+    'Cache-Control': 'max-age=0',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131 Safari/537.36',
+}
+res = requests.get("https://kwik.cx/f/I9kUGgPpESEZ",headers=headers)
 
 
 html_soup = BeautifulSoup(res.text,"html.parser")
 scripts = html_soup.find_all("script")
-obf_js = scripts[-2].text
+obf_js = scripts[-3].text
 deobf_js = deobfuscate(obf_js)
 print(extract_info(deobf_js))
